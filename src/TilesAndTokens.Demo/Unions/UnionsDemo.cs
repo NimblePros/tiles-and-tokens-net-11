@@ -21,7 +21,7 @@ internal sealed class UnionsDemo : IDemo
         Narrator.Say("A GameAction holds exactly one of those cases. Every switch over it must handle all three, or the build fails (CS8509).");
 
         var engine = new TurnEngine(new SeededDiceRoller(Seed));
-        var state = GameSetup.NewGame([Alice, Bob], StandardDeck.Create(), new SeededDeckShuffler(Seed));
+        var state = GameSetup.NewGame([Alice, Bob], StandardDeck.Create(), new SeededDeckShuffler(Seed), new MostPoints(Rounds: 10));
 
         Narrator.Step($"Five turns (seed {Seed})");
         PrintHands(state);
@@ -55,6 +55,10 @@ internal sealed class UnionsDemo : IDemo
             case ActionInvalid invalid:
                 Narrator.Problem($"Invalid: {invalid.Reason}");
                 return state;
+
+            case GameOver over:
+                Narrator.Outcome($"{over.Summary} {over.Winner} wins!");
+                return over.State;
         }
 
         throw new InvalidOperationException("Empty TurnOutcome.");

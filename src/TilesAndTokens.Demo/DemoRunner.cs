@@ -1,3 +1,4 @@
+using TilesAndTokens.Demo.Closed;
 using TilesAndTokens.Demo.Legacy;
 using TilesAndTokens.Demo.Unions;
 
@@ -10,6 +11,7 @@ internal static class DemoRunner
     [
         new LegacyDemo(),
         new UnionsDemo(),
+        new ClosedDemo(),
     ];
 
     public static int Run(string? command, bool noPause)

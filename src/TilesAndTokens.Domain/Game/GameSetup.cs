@@ -6,7 +6,11 @@ public static class GameSetup
     public const int MaxPlayers = 4;
     public const int HandSize = 3;
 
-    public static GameState NewGame(IReadOnlyList<PlayerId> playerIds, IEnumerable<Card> deck, IDeckShuffler shuffler)
+    public static GameState NewGame(
+        IReadOnlyList<PlayerId> playerIds,
+        IEnumerable<Card> deck,
+        IDeckShuffler shuffler,
+        VictoryCondition victory)
     {
         if (playerIds.Count is < MinPlayers or > MaxPlayers)
         {
@@ -27,6 +31,7 @@ public static class GameSetup
             Board.Empty,
             players,
             Deck: [.. shuffled.Skip(playerIds.Count * HandSize)],
+            victory,
             TurnLog: [],
             Round: 1,
             CurrentPlayer: playerIds[0]);

@@ -4,6 +4,7 @@ public sealed record GameState(
     Board Board,
     IReadOnlyList<Player> Players,
     IReadOnlyList<Card> Deck,
+    VictoryCondition Victory,
     IReadOnlyList<GameAction> TurnLog,
     int Round,
     PlayerId CurrentPlayer)

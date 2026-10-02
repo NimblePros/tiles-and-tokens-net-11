@@ -31,7 +31,7 @@ All of these must pass:
 
 | Condition | Winner |
 |---|---|
-| `MostPoints(Rounds)` | Highest score after N rounds. |
+| `MostPoints(Rounds)` | Highest score among players still in the game after N rounds. Ties go to the player earliest in turn order. |
 | `FirstToEdge` | First player whose connected tiles span from one edge of the board to the opposite edge. |
 | `LastPlayerStanding` | Last player who hasn't been eliminated. |
 

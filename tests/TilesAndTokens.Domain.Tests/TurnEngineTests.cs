@@ -135,10 +135,35 @@ public class TurnEngineTests
         state.CurrentPlayer.ShouldBe(Alice);
     }
 
+    [Fact]
+    public void WinningMove_EndsTheGame()
+    {
+        // Alice holds tiles from x = 1 to 7 on row 0; placing x = 0 connects the edges.
+        var board = new Board([.. Enumerable.Range(1, 7).Select(x => new Tile(new Position(x, 0), Terrain.Plains, Alice))]);
+
+        var outcome = _engine.Apply(TestGame.New(board, new FirstToEdge()), new PlayCard(Alice, Forest.Id, new Position(0, 0)));
+
+        var over = outcome.Value.ShouldBeOfType<GameOver>();
+        over.Winner.ShouldBe(Alice);
+        over.State.Board.Tiles.Count.ShouldBe(8);
+    }
+
+    [Fact]
+    public void EliminatingTheSecondToLastPlayer_EndsALastPlayerStandingGame()
+    {
+        var state = TestGame.New(victory: new LastPlayerStanding());
+        state = state.WithPlayer(state.GetPlayer(Alice) with { ConsecutivePasses = Player.MaxConsecutivePasses - 1 });
+
+        var outcome = _engine.Apply(state, new Pass(Alice));
+
+        outcome.Value.ShouldBeOfType<GameOver>().Winner.ShouldBe(Bob);
+    }
+
     private static GameState Applied(TurnOutcome outcome) => outcome switch
     {
         ActionApplied applied => applied.State,
         ActionInvalid invalid => throw new ShouldAssertException($"Expected the action to apply, but it was invalid: {invalid.Reason}"),
+        GameOver over => throw new ShouldAssertException($"Expected the game to continue, but {over.Winner} won."),
     };
 
     private static ActionInvalid Invalid(TurnOutcome outcome) => outcome.Value.ShouldBeOfType<ActionInvalid>();

@@ -95,8 +95,17 @@ public sealed class TurnEngine(IDiceRoller diceRoller)
         return Applied(state.WithPlayer(player), action, summary);
     }
 
-    private static ActionApplied Applied(GameState state, GameAction action, string summary) =>
-        new(EndTurn(state, action), summary);
+    private static TurnOutcome Applied(GameState state, GameAction action, string summary)
+    {
+        var next = EndTurn(state, action);
+
+        if (VictoryChecker.Check(next, next.Victory) is { } winner)
+        {
+            return new GameOver(next, summary, winner);
+        }
+
+        return new ActionApplied(next, summary);
+    }
 
     /// <summary>Logs the action and hands the turn to the next player who's still in the game.</summary>
     private static GameState EndTurn(GameState state, GameAction action)

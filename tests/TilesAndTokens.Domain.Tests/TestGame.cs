@@ -11,7 +11,8 @@ internal static class TestGame
     public static readonly BonusPointsCard Bonus = new(new CardId("bonus-1"), 3);
     public static readonly TileCard DeckCard = new(new CardId("deck-1"), Terrain.Plains);
 
-    public static GameState New(Board? board = null) => new(
+    /// <remarks>Defaults to a victory condition that can't trigger during a short test.</remarks>
+    public static GameState New(Board? board = null, VictoryCondition? victory = null) => new(
         board ?? Board.Empty,
         Players:
         [
@@ -19,6 +20,7 @@ internal static class TestGame
             new Player(Bob, []),
         ],
         Deck: [DeckCard],
+        victory ?? new MostPoints(Rounds: 100),
         TurnLog: [],
         Round: 1,
         CurrentPlayer: Alice);

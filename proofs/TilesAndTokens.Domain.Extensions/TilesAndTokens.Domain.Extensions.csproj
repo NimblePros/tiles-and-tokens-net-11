@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Boundary proof for Post 3. Deliberately NOT in TilesAndTokens.slnx: it doesn't compile.
+
+      dotnet build proofs/TilesAndTokens.Domain.Extensions
+
+    fails with CS9382, because VictoryCondition and PlacementRule are closed and
+    can only be derived from inside TilesAndTokens.Domain.
+  -->
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\TilesAndTokens.Domain\TilesAndTokens.Domain.csproj" />
+  </ItemGroup>
+
+</Project>
