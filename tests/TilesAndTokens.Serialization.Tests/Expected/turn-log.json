@@ -1,0 +1,37 @@
+[
+  {
+    "kind": "rollDice",
+    "player": {
+      "value": "alice"
+    }
+  },
+  {
+    "kind": "playCard",
+    "player": {
+      "value": "bob"
+    },
+    "card": {
+      "value": "forest-1"
+    },
+    "target": {
+      "x": 2,
+      "y": 3
+    }
+  },
+  {
+    "kind": "playCard",
+    "player": {
+      "value": "alice"
+    },
+    "card": {
+      "value": "bonus-1"
+    },
+    "target": null
+  },
+  {
+    "kind": "pass",
+    "player": {
+      "value": "bob"
+    }
+  }
+]

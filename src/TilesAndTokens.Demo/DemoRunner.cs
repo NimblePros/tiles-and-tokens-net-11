@@ -1,4 +1,5 @@
 using TilesAndTokens.Demo.Closed;
+using TilesAndTokens.Demo.Json;
 using TilesAndTokens.Demo.Legacy;
 using TilesAndTokens.Demo.Unions;
 
@@ -12,6 +13,7 @@ internal static class DemoRunner
         new LegacyDemo(),
         new UnionsDemo(),
         new ClosedDemo(),
+        new JsonDemo(),
     ];
 
     public static int Run(string? command, bool noPause)

@@ -1,0 +1,14 @@
+[
+  {
+    "id": {
+      "value": "water-2"
+    },
+    "terrain": "Water"
+  },
+  {
+    "id": {
+      "value": "bonus-1"
+    },
+    "points": 3
+  }
+]

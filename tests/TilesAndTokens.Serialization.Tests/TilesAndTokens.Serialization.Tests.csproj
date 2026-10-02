@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\TilesAndTokens.Serialization\TilesAndTokens.Serialization.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="Expected\**\*.json" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="..\..\samples\*.json" Link="Samples\%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+</Project>

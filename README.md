@@ -22,7 +22,7 @@ Each post has a git tag. Check out the tag to see the code as it was at the end 
 | `post-1` | Intro to .NET 11 and the "before" anti-patterns | `src/TilesAndTokens.Legacy`, `tests/TilesAndTokens.Legacy.Tests` | `dotnet run --project src/TilesAndTokens.Demo -- legacy` |
 | `post-2` | Discriminated unions | `src/TilesAndTokens.Domain` (`Actions`, `Placement`, `Engine`), `tests/TilesAndTokens.Domain.Tests` | `dotnet run --project src/TilesAndTokens.Demo -- unions` |
 | `post-3` | Closed hierarchies | `src/TilesAndTokens.Domain` (`Victory`, `Placement/Rules`), `proofs/TilesAndTokens.Domain.Extensions` | `dotnet run --project src/TilesAndTokens.Demo -- closed` |
-| `post-4` | System.Text.Json and union state | _coming soon_ | `... -- json` |
+| `post-4` | System.Text.Json and union state | `src/TilesAndTokens.Serialization`, `tests/TilesAndTokens.Serialization.Tests/Expected`, `samples/save-v1.json` | `dotnet run --project src/TilesAndTokens.Demo -- json` |
 | `post-5` | EF Core 11 indexes on nested complex types | _coming soon_ | `... -- efcore` |
 
 ## Running
@@ -41,10 +41,14 @@ dotnet run --project src/TilesAndTokens.Demo -- all --no-pause   # for CI and re
 src/
   TilesAndTokens.Legacy/   Post 1 "before" code (pinned to C# 14)
   TilesAndTokens.Domain/   Posts 2-3: unions, closed hierarchies, game engine
+  TilesAndTokens.Serialization/   Post 4: System.Text.Json save/load
   TilesAndTokens.Demo/     Console runner, one command per post + `all`
 tests/
   TilesAndTokens.Legacy.Tests/
   TilesAndTokens.Domain.Tests/
+  TilesAndTokens.Serialization.Tests/   Expected/ holds the committed expected JSON
+samples/
+  save-v1.json             Frozen v1 save file; must keep loading
 proofs/
   TilesAndTokens.Domain.Extensions/   Not in the solution: proves closed types can't be extended (CS9382)
 docs/

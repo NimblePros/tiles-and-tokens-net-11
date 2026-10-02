@@ -235,7 +235,7 @@ public sealed record GameState(
 
 ### Tests
 - Round-trip equality for a full `GameState` built by the engine after 10 seeded turns.
-- A test of the JSON shape. **The approach is TBD and will be decided with the author when Milestone 4 starts.** Do not pick one or add a snapshot library ahead of time; ask first.
+- A test of the JSON shape: **compare against committed expected-JSON files** (decided with the author at the start of Milestone 4). No snapshot library.
 - Unknown-case behavior.
 
 ### Demo runner
@@ -317,6 +317,7 @@ The `efcore` command ends with a full-pipeline walkthrough: union action → clo
 - An `all` demo command runs every milestone's demo in order.
 - Repo name: **`tiles-and-tokens-net-11`** (matches the local folder name). Use it in the README and CI.
 - Repo visibility: **private** during development.
+- Milestone 4 JSON shape tests: **committed expected-JSON files**, no snapshot library.
 
 ## Open questions for the author
 
@@ -324,4 +325,4 @@ _None right now._
 
 ## Deferred decisions
 
-- **Milestone 4 JSON shape verification:** TBD. Decide with the author at the start of Milestone 4.
+_None right now._

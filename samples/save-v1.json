@@ -1,0 +1,297 @@
+{
+  "board": {
+    "tiles": [
+      {
+        "position": {
+          "x": 0,
+          "y": 0
+        },
+        "terrain": "Plains",
+        "owner": {
+          "value": "bob"
+        }
+      },
+      {
+        "position": {
+          "x": 1,
+          "y": 0
+        },
+        "terrain": "Forest",
+        "owner": {
+          "value": "alice"
+        }
+      },
+      {
+        "position": {
+          "x": 0,
+          "y": 1
+        },
+        "terrain": "Water",
+        "owner": {
+          "value": "bob"
+        }
+      }
+    ]
+  },
+  "players": [
+    {
+      "id": {
+        "value": "alice"
+      },
+      "hand": [
+        {
+          "id": {
+            "value": "mountain-2"
+          },
+          "terrain": "Mountain"
+        }
+      ],
+      "score": 26,
+      "consecutivePasses": 0
+    },
+    {
+      "id": {
+        "value": "bob"
+      },
+      "hand": [
+        {
+          "id": {
+            "value": "mountain-3"
+          },
+          "terrain": "Mountain"
+        }
+      ],
+      "score": 9,
+      "consecutivePasses": 0
+    }
+  ],
+  "deck": [
+    {
+      "id": {
+        "value": "forest-1"
+      },
+      "terrain": "Forest"
+    },
+    {
+      "id": {
+        "value": "bonus-4"
+      },
+      "points": 3
+    },
+    {
+      "id": {
+        "value": "plains-2"
+      },
+      "terrain": "Plains"
+    },
+    {
+      "id": {
+        "value": "bonus-2"
+      },
+      "points": 3
+    },
+    {
+      "id": {
+        "value": "mountain-1"
+      },
+      "terrain": "Mountain"
+    },
+    {
+      "id": {
+        "value": "bonus-3"
+      },
+      "points": 3
+    },
+    {
+      "id": {
+        "value": "plains-3"
+      },
+      "terrain": "Plains"
+    },
+    {
+      "id": {
+        "value": "water-3"
+      },
+      "terrain": "Water"
+    },
+    {
+      "id": {
+        "value": "forest-6"
+      },
+      "terrain": "Forest"
+    },
+    {
+      "id": {
+        "value": "plains-6"
+      },
+      "terrain": "Plains"
+    },
+    {
+      "id": {
+        "value": "forest-4"
+      },
+      "terrain": "Forest"
+    },
+    {
+      "id": {
+        "value": "water-4"
+      },
+      "terrain": "Water"
+    },
+    {
+      "id": {
+        "value": "water-2"
+      },
+      "terrain": "Water"
+    },
+    {
+      "id": {
+        "value": "plains-4"
+      },
+      "terrain": "Plains"
+    },
+    {
+      "id": {
+        "value": "water-5"
+      },
+      "terrain": "Water"
+    },
+    {
+      "id": {
+        "value": "forest-3"
+      },
+      "terrain": "Forest"
+    },
+    {
+      "id": {
+        "value": "mountain-6"
+      },
+      "terrain": "Mountain"
+    },
+    {
+      "id": {
+        "value": "water-6"
+      },
+      "terrain": "Water"
+    },
+    {
+      "id": {
+        "value": "mountain-5"
+      },
+      "terrain": "Mountain"
+    },
+    {
+      "id": {
+        "value": "mountain-4"
+      },
+      "terrain": "Mountain"
+    },
+    {
+      "id": {
+        "value": "forest-2"
+      },
+      "terrain": "Forest"
+    },
+    {
+      "id": {
+        "value": "plains-1"
+      },
+      "terrain": "Plains"
+    }
+  ],
+  "victory": {
+    "kind": "mostPoints",
+    "rounds": 20
+  },
+  "turnLog": [
+    {
+      "kind": "rollDice",
+      "player": {
+        "value": "alice"
+      }
+    },
+    {
+      "kind": "playCard",
+      "player": {
+        "value": "bob"
+      },
+      "card": {
+        "value": "plains-5"
+      },
+      "target": {
+        "x": 0,
+        "y": 0
+      }
+    },
+    {
+      "kind": "playCard",
+      "player": {
+        "value": "alice"
+      },
+      "card": {
+        "value": "forest-5"
+      },
+      "target": {
+        "x": 1,
+        "y": 0
+      }
+    },
+    {
+      "kind": "pass",
+      "player": {
+        "value": "bob"
+      }
+    },
+    {
+      "kind": "rollDice",
+      "player": {
+        "value": "alice"
+      }
+    },
+    {
+      "kind": "playCard",
+      "player": {
+        "value": "bob"
+      },
+      "card": {
+        "value": "water-1"
+      },
+      "target": {
+        "x": 0,
+        "y": 1
+      }
+    },
+    {
+      "kind": "playCard",
+      "player": {
+        "value": "alice"
+      },
+      "card": {
+        "value": "bonus-1"
+      },
+      "target": null
+    },
+    {
+      "kind": "pass",
+      "player": {
+        "value": "bob"
+      }
+    },
+    {
+      "kind": "rollDice",
+      "player": {
+        "value": "alice"
+      }
+    },
+    {
+      "kind": "rollDice",
+      "player": {
+        "value": "bob"
+      }
+    }
+  ],
+  "round": 6,
+  "currentPlayer": {
+    "value": "alice"
+  }
+}

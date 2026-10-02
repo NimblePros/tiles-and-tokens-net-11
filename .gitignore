@@ -485,3 +485,9 @@ $RECYCLE.BIN/
 
 # Vim temporary swap files
 *.swp
+
+# Expected-JSON test mismatches, reviewed and then renamed or deleted
+*.received.json
+
+# Demo save files
+saves/

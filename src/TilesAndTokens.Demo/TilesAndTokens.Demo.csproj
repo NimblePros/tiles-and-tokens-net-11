@@ -7,6 +7,7 @@
   <ItemGroup>
     <ProjectReference Include="..\TilesAndTokens.Legacy\TilesAndTokens.Legacy.csproj" />
     <ProjectReference Include="..\TilesAndTokens.Domain\TilesAndTokens.Domain.csproj" />
+    <ProjectReference Include="..\TilesAndTokens.Serialization\TilesAndTokens.Serialization.csproj" />
   </ItemGroup>
 
 </Project>
