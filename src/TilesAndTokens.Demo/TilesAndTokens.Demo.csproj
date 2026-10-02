@@ -6,6 +6,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\TilesAndTokens.Legacy\TilesAndTokens.Legacy.csproj" />
+    <ProjectReference Include="..\TilesAndTokens.Domain\TilesAndTokens.Domain.csproj" />
   </ItemGroup>
 
 </Project>

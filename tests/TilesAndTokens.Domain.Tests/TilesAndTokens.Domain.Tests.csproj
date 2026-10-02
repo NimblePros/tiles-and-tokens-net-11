@@ -1,0 +1,7 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\TilesAndTokens.Domain\TilesAndTokens.Domain.csproj" />
+  </ItemGroup>
+
+</Project>

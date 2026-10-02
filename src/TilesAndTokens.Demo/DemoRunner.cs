@@ -1,4 +1,5 @@
 using TilesAndTokens.Demo.Legacy;
+using TilesAndTokens.Demo.Unions;
 
 namespace TilesAndTokens.Demo;
 
@@ -8,6 +9,7 @@ internal static class DemoRunner
     private static readonly IReadOnlyList<IDemo> Demos =
     [
         new LegacyDemo(),
+        new UnionsDemo(),
     ];
 
     public static int Run(string? command, bool noPause)
