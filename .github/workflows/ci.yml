@@ -1,0 +1,24 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+    tags: ['post-*']
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
+
+      - run: dotnet build
+
+      - run: dotnet test --no-build
+
+      - name: Demo smoke test
+        run: dotnet run --project src/TilesAndTokens.Demo --no-build -- all --no-pause

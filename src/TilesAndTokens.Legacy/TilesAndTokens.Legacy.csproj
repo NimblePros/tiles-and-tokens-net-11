@@ -1,0 +1,11 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Post 1 "before" code. Deliberately pinned to C# 14 so none of the
+    C# 15 domain modeling features are available here.
+  -->
+  <PropertyGroup>
+    <LangVersion>14</LangVersion>
+  </PropertyGroup>
+
+</Project>

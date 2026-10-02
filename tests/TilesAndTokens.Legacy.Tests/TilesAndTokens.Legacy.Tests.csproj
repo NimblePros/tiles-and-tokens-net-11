@@ -1,0 +1,7 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\TilesAndTokens.Legacy\TilesAndTokens.Legacy.csproj" />
+  </ItemGroup>
+
+</Project>

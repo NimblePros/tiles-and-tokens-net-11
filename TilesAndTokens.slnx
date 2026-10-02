@@ -1,0 +1,9 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/TilesAndTokens.Demo/TilesAndTokens.Demo.csproj" />
+    <Project Path="src/TilesAndTokens.Legacy/TilesAndTokens.Legacy.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/TilesAndTokens.Legacy.Tests/TilesAndTokens.Legacy.Tests.csproj" />
+  </Folder>
+</Solution>
