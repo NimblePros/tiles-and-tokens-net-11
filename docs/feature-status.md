@@ -304,7 +304,21 @@ The workaround, in `src/TilesAndTokens.Serialization/GameActionKinds/` and marke
 - `TilesAndTokensJsonContext` (`[JsonSerializable(typeof(GameState))]`, metadata mode) works with unions and closed hierarchies. Round-trip tests run through it.
 - `TilesAndTokens.Serialization` builds with `IsAotCompatible=true` and **no warnings**.
 - **Trimmed publish:** `dotnet publish src/TilesAndTokens.Demo -c Release -r win-x64 --self-contained -p:PublishTrimmed=true` gives **0 trim warnings**. The trimmed `json` demo saves, loads, and resumes correctly.
-- **Native AOT:** *not verified end to end.* `-p:PublishAot=true` stops at linking on the dev machine: *vswhere.exe failed to locate Visual Studio with Microsoft.VisualStudio.Component.VC.Tools.x86.x64* (no C++ build tools). This is a machine prerequisite, not a code problem. TODO: run it on a machine (or a CI job) that has the native toolchain.
+- **Native AOT: verified end to end on Linux (2026-10-02).** On Windows, `-p:PublishAot=true` stops at linking without the Visual Studio C++ build tools (*vswhere.exe failed to locate Visual Studio with Microsoft.VisualStudio.Component.VC.Tools.x86.x64*). So it was published in the official RC1 SDK container `mcr.microsoft.com/dotnet/sdk:11.0.100-rc.1-aot` (SDK `11.0.100-rc.1.26425.128`), from `git archive` of commit `36c3d4e` (tag `post-5`):
+
+  ```shell
+  dotnet publish src/TilesAndTokens.Demo -c Release -r linux-x64 -p:PublishAot=true
+  ```
+
+  - **As committed, the publish fails.** `PublishAot` turns on the AOT analyzers in every referenced project, and `TreatWarningsAsErrors` makes their findings errors: 4 × IL2026 and 4 × IL3050. **None of them is in the Post 4 code.**
+    - `Legacy/Json/TurnActionJsonConverter.cs`: the intentional reflection-based "old way".
+    - `Persistence/TilesAndTokensDbContext.cs`: EF Core itself, *EF Core isn't fully compatible with NativeAOT*.
+    - `Persistence/Queries/SavedGameQueries.cs`: an anonymous type serialized by reflection.
+
+    These came in with Posts 4–5 (the Legacy converter and the EF Core demo).
+  - **With `-p:TreatWarningsAsErrors=false` (diagnostic only), it publishes:** a 35.8 MB native `linux-x64` executable. The whole-program compiler (ILC) reports **nothing from Domain or Serialization**. Its warnings come only from EF Core / Npgsql (IL2104, IL3053), `EfCoreDemo`, `TilesAndTokensDbContext` and `SavedGameQueries`. The Legacy converter is unreachable, so ILC doesn't report it.
+  - **The native binary works:** `json` saves, prints, loads (every `GameAction` case and the `VictoryCondition` restored) and resumes play, with exit code 0 and output identical to the JIT run. The save is 3,976 bytes vs. 4,236 on Windows, only because of `\n` vs. `\r\n` in indented JSON. `all --no-pause` runs Posts 1–4 natively, and `efcore` skips (no database).
+  - **Not verified:** the EF Core path under Native AOT. EF Core declares itself not fully AOT compatible; it would need a compiled model and precompiled queries, which is out of scope here.
 
 ### Output customization
 
