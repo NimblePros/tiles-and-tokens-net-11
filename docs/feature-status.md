@@ -304,7 +304,7 @@ The workaround, in `src/TilesAndTokens.Serialization/GameActionKinds/` and marke
 - `TilesAndTokensJsonContext` (`[JsonSerializable(typeof(GameState))]`, metadata mode) works with unions and closed hierarchies. Round-trip tests run through it.
 - `TilesAndTokens.Serialization` builds with `IsAotCompatible=true` and **no warnings**.
 - **Trimmed publish:** `dotnet publish src/TilesAndTokens.Demo -c Release -r win-x64 --self-contained -p:PublishTrimmed=true` gives **0 trim warnings**. The trimmed `json` demo saves, loads, and resumes correctly.
-- **Native AOT: verified end to end on Linux (2026-10-02).** On Windows, `-p:PublishAot=true` stops at linking without the Visual Studio C++ build tools (*vswhere.exe failed to locate Visual Studio with Microsoft.VisualStudio.Component.VC.Tools.x86.x64*). So it was published in the official RC1 SDK container `mcr.microsoft.com/dotnet/sdk:11.0.100-rc.1-aot` (SDK `11.0.100-rc.1.26425.128`), from `git archive` of commit `36c3d4e` (tag `post-5`):
+- **Native AOT: verified end to end on Linux (2026-10-02). Git tag: `native-aot`.** On Windows, `-p:PublishAot=true` stops at linking without the Visual Studio C++ build tools (*vswhere.exe failed to locate Visual Studio with Microsoft.VisualStudio.Component.VC.Tools.x86.x64*). So it was published in the official RC1 SDK container `mcr.microsoft.com/dotnet/sdk:11.0.100-rc.1-aot` (SDK `11.0.100-rc.1.26425.128`), from `git archive` of commit `36c3d4e` (tag `post-5`):
 
   ```shell
   dotnet publish src/TilesAndTokens.Demo -c Release -r linux-x64 -p:PublishAot=true
