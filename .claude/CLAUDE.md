@@ -19,3 +19,6 @@ Companion demo for a 5-part NimblePros blog series and a conference talk on C# 1
 - `TreatWarningsAsErrors` is on everywhere, on purpose: missing switch cases should fail the build during the talk.
 - Code is teaching material: favor clarity over cleverness, keep files small, make each feature easy to find.
 - Each milestone registers its demo in `src/TilesAndTokens.Demo/DemoRunner.cs` so `all` picks it up.
+- `dotnet test` needs Docker running: the Persistence tests start Postgres through the Aspire AppHost (`Aspire.Hosting.Testing`).
+- EF Core migrations: `dotnet tool restore`, then `dotnet ef migrations add <Name> --project src/TilesAndTokens.Persistence --startup-project src/TilesAndTokens.Persistence`. Build before `dotnet ef migrations script`.
+- Never `git clean` uncommitted work: it deletes untracked source files, not just build output.

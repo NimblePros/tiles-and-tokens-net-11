@@ -1,13 +1,17 @@
 <Solution>
   <Folder Name="/src/">
+    <Project Path="src/TilesAndTokens.AppHost/TilesAndTokens.AppHost.csproj" />
     <Project Path="src/TilesAndTokens.Demo/TilesAndTokens.Demo.csproj" />
     <Project Path="src/TilesAndTokens.Domain/TilesAndTokens.Domain.csproj" />
     <Project Path="src/TilesAndTokens.Legacy/TilesAndTokens.Legacy.csproj" />
+    <Project Path="src/TilesAndTokens.Persistence/TilesAndTokens.Persistence.csproj" />
     <Project Path="src/TilesAndTokens.Serialization/TilesAndTokens.Serialization.csproj" />
+    <Project Path="src/TilesAndTokens.ServiceDefaults/TilesAndTokens.ServiceDefaults.csproj" />
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/TilesAndTokens.Domain.Tests/TilesAndTokens.Domain.Tests.csproj" />
     <Project Path="tests/TilesAndTokens.Legacy.Tests/TilesAndTokens.Legacy.Tests.csproj" />
+    <Project Path="tests/TilesAndTokens.Persistence.Tests/TilesAndTokens.Persistence.Tests.csproj" />
     <Project Path="tests/TilesAndTokens.Serialization.Tests/TilesAndTokens.Serialization.Tests.csproj" />
   </Folder>
 </Solution>

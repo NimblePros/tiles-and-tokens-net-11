@@ -318,6 +318,7 @@ The `efcore` command ends with a full-pipeline walkthrough: union action → clo
 - Repo name: **`tiles-and-tokens-net-11`** (matches the local folder name). Use it in the README and CI.
 - Repo visibility: **private** during development.
 - Milestone 4 JSON shape tests: **committed expected-JSON files**, no snapshot library.
+- Milestone 5 mapping (option A, decided with the author after verification on RC1): `Board` (with the `Tiles` complex collection) is a JSON column and the edge query runs over it in LINQ. Native EF Core 11 nested-complex-type indexes go on column-mapped data (a `Summary` complex type). The JSON-path index gap in Npgsql RC1 is documented, and an optional Postgres-native GIN index is added through `migrationBuilder.Sql`, clearly labeled.
 
 ## Open questions for the author
 

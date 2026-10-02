@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\TilesAndTokens.AppHost\TilesAndTokens.AppHost.csproj" />
+    <ProjectReference Include="..\..\src\TilesAndTokens.Persistence\TilesAndTokens.Persistence.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Aspire.Hosting.Testing" />
+  </ItemGroup>
+
+</Project>

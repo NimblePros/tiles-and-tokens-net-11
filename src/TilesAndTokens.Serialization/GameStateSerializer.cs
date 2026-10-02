@@ -15,6 +15,12 @@ public static class GameStateSerializer
         JsonSerializer.Deserialize(stream, GameStateTypeInfo)
         ?? throw new JsonException("The save file contains null.");
 
+    public static string ToJson(GameState state) => JsonSerializer.Serialize(state, GameStateTypeInfo);
+
+    public static GameState FromJson(string json) =>
+        JsonSerializer.Deserialize(json, GameStateTypeInfo)
+        ?? throw new JsonException("The JSON contains null.");
+
     /// <remarks>Public so tests can build options for a future version with more union cases.</remarks>
     public static JsonSerializerOptions CreateOptions(IJsonTypeInfoResolver resolver, UnionCaseKinds kinds)
     {

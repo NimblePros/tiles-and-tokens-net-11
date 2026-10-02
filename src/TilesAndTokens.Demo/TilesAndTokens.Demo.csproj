@@ -8,6 +8,12 @@
     <ProjectReference Include="..\TilesAndTokens.Legacy\TilesAndTokens.Legacy.csproj" />
     <ProjectReference Include="..\TilesAndTokens.Domain\TilesAndTokens.Domain.csproj" />
     <ProjectReference Include="..\TilesAndTokens.Serialization\TilesAndTokens.Serialization.csproj" />
+    <ProjectReference Include="..\TilesAndTokens.Persistence\TilesAndTokens.Persistence.csproj" />
+    <ProjectReference Include="..\TilesAndTokens.ServiceDefaults\TilesAndTokens.ServiceDefaults.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Aspire.Npgsql.EntityFrameworkCore.PostgreSQL" />
   </ItemGroup>
 
 </Project>

@@ -11,7 +11,7 @@ The app is a small board game, [Tiles & Tokens](docs/game-rules.md). Its turns, 
 ## Prerequisites
 
 - .NET SDK `11.0.100-rc.1.26425.128` or a later .NET 11 feature band (pinned in `global.json`)
-- From Post 5 on: a container runtime (Docker or Podman) for Aspire
+- From Post 5 on: a container runtime (Docker or Podman) for Aspire. `dotnet test` starts Postgres through Aspire for the persistence tests.
 
 ## Following along
 
@@ -23,7 +23,7 @@ Each post has a git tag. Check out the tag to see the code as it was at the end 
 | `post-2` | Discriminated unions | `src/TilesAndTokens.Domain` (`Actions`, `Placement`, `Engine`), `tests/TilesAndTokens.Domain.Tests` | `dotnet run --project src/TilesAndTokens.Demo -- unions` |
 | `post-3` | Closed hierarchies | `src/TilesAndTokens.Domain` (`Victory`, `Placement/Rules`), `proofs/TilesAndTokens.Domain.Extensions` | `dotnet run --project src/TilesAndTokens.Demo -- closed` |
 | `post-4` | System.Text.Json and union state | `src/TilesAndTokens.Serialization`, `tests/TilesAndTokens.Serialization.Tests/Expected`, `samples/save-v1.json` | `dotnet run --project src/TilesAndTokens.Demo -- json` |
-| `post-5` | EF Core 11 indexes on nested complex types | _coming soon_ | `... -- efcore` |
+| `post-5` | EF Core 11 indexes on nested complex types | `src/TilesAndTokens.Persistence`, `src/TilesAndTokens.AppHost`, `docs/post-5-sql-and-plans.md` | `dotnet run --project src/TilesAndTokens.AppHost` |
 
 ## Running
 
@@ -33,7 +33,12 @@ dotnet test
 dotnet run --project src/TilesAndTokens.Demo -- legacy
 dotnet run --project src/TilesAndTokens.Demo -- all              # every demo, pausing between sections
 dotnet run --project src/TilesAndTokens.Demo -- all --no-pause   # for CI and recordings
+dotnet run --project src/TilesAndTokens.AppHost                   # Postgres + the whole series, from the Aspire dashboard
 ```
+
+Without the AppHost there's no database, so `all` skips the `efcore` demo with a message.
+
+EF Core migrations use the local `dotnet-ef` tool: run `dotnet tool restore` once.
 
 ## Layout
 
@@ -42,11 +47,15 @@ src/
   TilesAndTokens.Legacy/   Post 1 "before" code (pinned to C# 14)
   TilesAndTokens.Domain/   Posts 2-3: unions, closed hierarchies, game engine
   TilesAndTokens.Serialization/   Post 4: System.Text.Json save/load
+  TilesAndTokens.Persistence/     Post 5: EF Core 11 + Npgsql, migrations, queries
+  TilesAndTokens.AppHost/         Post 5: Aspire AppHost (Postgres + the demo runner)
+  TilesAndTokens.ServiceDefaults/ Post 5: Aspire service defaults (OpenTelemetry)
   TilesAndTokens.Demo/     Console runner, one command per post + `all`
 tests/
   TilesAndTokens.Legacy.Tests/
   TilesAndTokens.Domain.Tests/
   TilesAndTokens.Serialization.Tests/   Expected/ holds the committed expected JSON
+  TilesAndTokens.Persistence.Tests/     Aspire-hosted Postgres integration tests
 samples/
   save-v1.json             Frozen v1 save file; must keep loading
 proofs/
@@ -54,6 +63,7 @@ proofs/
 docs/
   feature-status.md        Verified syntax and limitations per feature
   game-rules.md
+  post-5-sql-and-plans.md  Generated SQL and EXPLAIN ANALYZE output
 ```
 
 Tests use xUnit v3, Shouldly, and NSubstitute.

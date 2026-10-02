@@ -331,4 +331,112 @@ The comparison for the post: closed hierarchies need **the same attributes** as 
 
 ## Post 5: EF Core 11 nested complex type indexes
 
-_Not started._
+Verified 2026-10-02 against a real Postgres. The packages:
+
+| Package | Version |
+|---|---|
+| EF Core / EF Core Design / `dotnet-ef` (local tool) | `11.0.0-rc.1.26425.128` |
+| Npgsql.EntityFrameworkCore.PostgreSQL | `11.0.0-rc.1.1` |
+| Aspire (`Aspire.AppHost.Sdk`, `Aspire.Hosting.PostgreSQL`, `Aspire.Npgsql.EntityFrameworkCore.PostgreSQL`, `Aspire.Hosting.Testing`) | `13.6.0` (stable) |
+| PostgreSQL started by the AppHost | 18.3 |
+
+SQL and execution plans for the post: [post-5-sql-and-plans.md](post-5-sql-and-plans.md).
+
+### The plan's assumption didn't hold
+
+The plan wanted indexes on `Board.Tiles[].Position.X` and `Board.Tiles[].OwnerId`. Verified on RC1:
+
+1. **A complex collection must be JSON-mapped.** RC1's `RelationalStrings.ComplexCollectionNotMappedToJson` reads *The complex collection property '{entityType}.{property}' must be mapped to a JSON column. Use 'ToJson()'...* (from the API docs; every configuration tested used `ToJson()` on `Tiles`). Its **root must be JSON too**, which was triggered: *Complex property 'SavedGame.Board#BoardSnapshot.Tiles' is mapped to JSON but its containing type 'SavedGame.Board#BoardSnapshot' is not. Map the root complex type to JSON.* So `Board` is one `jsonb` column, and table splitting isn't an option for the tiles.
+2. **EF Core 11 accepts indexes into JSON, including through collections:**
+   - `HasIndex(g => g.Board.Tiles[0].OwnerId)`;
+   - the new metadata API `IMutableEntityType.AddIndex(properties, collectionIndices)`, where a `null` entry means "all elements" and a number means one element (backed by `RelationalJsonIndex`).
+
+   **Npgsql 11 RC1 doesn't generate a path index for either.** It emits a B-tree over the **whole column**:
+
+   ```sql
+   CREATE INDEX "IX_Games_Board_Tiles_OwnerId" ON "Games" ("Board");
+   ```
+
+   The same happens for a nested property inside a JSON-mapped (non-collection) complex type. The edge query can't use these indexes, so none is configured. (Core messages that exist in RC1: *Indexes cannot reference properties whose path goes through a complex collection* is `CoreStrings.IndexOnComplexCollection`. `UniqueIndexOnComplexProperty` says unique indexes aren't supported on complex properties. Neither fired for the configurations above.)
+
+**Decision (option A, agreed with the author):** split the post along what works.
+
+### What works: indexes on nested complex properties mapped to columns
+
+`GameSummary` → `LeaderSnapshot` / `VictorySnapshot` are complex types mapped to ordinary columns (table splitting). Indexing their nested properties is plain fluent API:
+
+```csharp
+game.HasIndex(g => g.Summary.Leader.PlayerId);
+game.HasIndex(g => new { g.Summary.Victory.Kind, g.Summary.Leader.Score });
+```
+
+```sql
+CREATE INDEX "IX_SavedGames_Summary_Leader_PlayerId" ON "SavedGames" ("Summary_Leader_PlayerId");
+CREATE INDEX "IX_SavedGames_Summary_Victory_Kind_Summary_Leader_Score" ON "SavedGames" ("Summary_Victory_Kind", "Summary_Leader_Score");
+```
+
+- Three levels deep works too: `HasIndex(x => x.Standings.Leader.Player.Id)` produced `("Standings_Leader_Player_Id")` in a scratch model.
+- At 1,000 rows Postgres uses both: `Index Scan Backward using "IX_SavedGames_Summary_Victory_Kind_Summary_Leader_Score"` and `Bitmap Index Scan on "IX_SavedGames_Summary_Leader_PlayerId"`.
+- Tests check `pg_indexes` (`NestedComplexPropertyIndexes_ExistInPostgres`).
+
+### The edge query over JSON
+
+`Board.Tiles.Any(t => t.OwnerId == p && (t.Position.X == 0 || ...))` translates. EF Core 11 / Npgsql produce `EXISTS (SELECT 1 FROM ROWS FROM (jsonb_to_recordset(s."Board" -> 'Tiles') ...))`. It always means a sequential scan with a per-row function scan.
+
+**Optional Postgres-native GIN index** (`AddBoardGinIndex`, hand-written `migrationBuilder.Sql`, labeled in code):
+
+- `CREATE INDEX "IX_SavedGames_Board_Gin" ON "SavedGames" USING GIN ("Board" jsonb_path_ops);`
+- It's used only by `@>` containment, so the query is raw SQL (`WithTileOnEdgeUsingGin`) that selects ids and is composed into LINQ (`WHERE "Id" IN (...)`). It returns the same rows as the LINQ query (tested).
+- **Result at 20,000 games:** when the index is used it's about 15× faster (3.5 ms vs. 53.4 ms for LINQ). **But Postgres's planner doesn't choose it.** It picks a parallel seq scan (75.1 ms), because Postgres keeps no statistics for `jsonb @>` selectivity. At 1,000 games it scans the table too. Shown honestly in the demo and in the plans doc.
+- Getting there hit two more RC1 limits:
+  - **`FromSql` on `SavedGame` throws `NullReferenceException`** (`RelationalQueryableMethodTranslatingExpressionVisitor.GenerateComplexJsonShaper`). The workaround is to select ids with `Database.SqlQuery<Guid>` and compose.
+  - **`EF.Functions.JsonContains(g.Board, ...)` doesn't translate** for a complex JSON property (*The LINQ expression ... could not be translated*).
+
+### Domain types vs. snapshot types: snapshots
+
+| Tried to map | Result on RC1 |
+|---|---|
+| Domain `Board(IReadOnlyList<Tile> Tiles)` as a JSON complex type | ❌ *No suitable constructor was found for the type 'Board'* |
+| `VictoryCondition` (closed hierarchy) as a complex type | ❌ Mapped as the base type: *Complex type 'Row.Victory#VictoryCondition' has no properties defined.* Complex types have no inheritance. (`Row` was the scratch entity.) |
+| `GameAction` (union) as a property | ❌ *The 'GameAction' property ... could not be mapped because the database provider does not support this type.* |
+| `GameAction` as a complex property or complex collection | ❌ **The type 'Row.LastAction#GameAction' cannot be mapped because union types are not supported. See https://github.com/dotnet/efcore/issues/36375** (EF Core recognizes unions and rejects them explicitly.) |
+
+So persistence uses mutable snapshot classes (`BoardSnapshot` → `TileSnapshot` → `PositionSnapshot`, `GameSummary` → `LeaderSnapshot` / `VictorySnapshot`):
+
+- **`VictoryCondition`** is flattened to `VictorySnapshot { Kind, Rounds? }` by an exhaustive switch with no discard arm. A new victory condition breaks the build in persistence too.
+- **Unions, labeled FALLBACK:** `SavedGame.StateJson` (`jsonb`) holds the full `GameState`, turn log included, written by the Post 4 serializer. `SavedGame.Restore()` reads it back.
+- `jsonb` reorders object keys. The Post 4 classifier finds `"kind"` anywhere in an object and closed-type discriminators sort first (shorter key), so it round-trips. That's tested by `SaveAndLoad_RestoresTheWholeGameState`.
+
+### Migrations
+
+- Generated with the local tool (`dotnet tool restore`, then `dotnet ef migrations add ... --project src/TilesAndTokens.Persistence --startup-project src/TilesAndTokens.Persistence`). An `IDesignTimeDbContextFactory` means no database is needed.
+- **Migration class names include the timestamp** in RC1: `public partial class _20261002155612_InitialCreate : Migration`.
+- **Applied at Demo startup** (`Database.MigrateAsync()` in the `efcore` command, a dev-only shortcut). The test fixture calls the same method.
+- `dotnet ef migrations script --no-build` straight after `migrations add` uses the old assembly and silently leaves the new migration out. Build first.
+
+### Gotchas: changing the nested shape (tested on a scratch copy, not committed)
+
+| Change | Migration EF generates | Reading existing rows |
+|---|---|---|
+| Add `LeaderSnapshot.TileCount` (column-mapped) | `AddColumn<int>("Summary_Leader_TileCount", nullable: false, defaultValue: 0)` | Normal |
+| Add `TileSnapshot.Rotation` (inside the `Board` JSON) | **Nothing.** The JSON column has no schema. | Old rows load: `int Rotation` reads **0**, `int? Rotation` reads **null**. No error. |
+
+**Nullable nested complex types:** an optional complex property mapped to columns (`Leader? Leader`) is accepted. Every one of its columns becomes nullable (`"Leader_Score" integer`, no `NOT NULL`). Only the DDL was checked. A round-trip of a null `Leader` wasn't tested.
+
+### Npgsql specifics
+
+- `ToJson()` complex types map to **`jsonb`** (not `json`). `StateJson` is set to `jsonb` explicitly.
+- `Terrain` inside the JSON is stored as a string (`HasConversion<string>()`).
+- B-tree for the column indexes. GIN `jsonb_path_ops` only for containment, see above.
+
+### Aspire
+
+- **Installed templates are stale:** `dotnet new aspire-apphost` on this machine generates Aspire **9.5.1** and `net9.0`, so the AppHost and ServiceDefaults were written by hand for 13.6.0. The AppHost uses `<Project Sdk="Aspire.AppHost.Sdk/13.6.0">` with no separate `Aspire.Hosting.AppHost` package.
+- **Mixing versions works:** `Aspire.Npgsql.EntityFrameworkCore.PostgreSQL` 13.6.0 targets net10.0 / Npgsql EF 10, but it works with the RC1 provider. Npgsql EF `11.0.0-rc.1.1` is referenced explicitly. All Persistence tests and the AppHost run pass.
+- Warning **ASPIRE010**: *AppHost is configured with AspireUseCliBundle=false. Some Aspire features require the Aspire CLI bundle.* No feature used here needed it. Left as is.
+- `ServiceDefaults` is trimmed for a console app: OpenTelemetry only. The template's health checks, HTTP resilience and service discovery need a web host. OpenTelemetry 1.19 uses `builder.AddOpenTelemetry()` on the host builder.
+- The `efcore` demo clears console logging providers so its narration stays readable. EF's command logs still reach the dashboard through OpenTelemetry.
+- **Aspire testing:** `DistributedApplicationTestingBuilder.CreateAsync<Projects.TilesAndTokens_AppHost>()`. The fixture removes the `demo` and pgweb resources and shares one Postgres per xUnit collection.
+  - `ResourceLoggerService.GetAllAsync("demo")` / `WatchAsync(...)` returned **no lines** for the finished demo resource.
+  - The AppHost test captures the forwarded logger category `TilesAndTokens.AppHost.Resources.demo` instead.
+- Startup log noise: Aspire's database health check runs once before Aspire creates the database (*3D000: database "tilesandtokens" does not exist*), then passes.

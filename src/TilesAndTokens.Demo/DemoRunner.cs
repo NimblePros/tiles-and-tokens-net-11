@@ -1,4 +1,5 @@
 using TilesAndTokens.Demo.Closed;
+using TilesAndTokens.Demo.EfCore;
 using TilesAndTokens.Demo.Json;
 using TilesAndTokens.Demo.Legacy;
 using TilesAndTokens.Demo.Unions;
@@ -14,6 +15,7 @@ internal static class DemoRunner
         new UnionsDemo(),
         new ClosedDemo(),
         new JsonDemo(),
+        new EfCoreDemo(),
     ];
 
     public static int Run(string? command, bool noPause)
