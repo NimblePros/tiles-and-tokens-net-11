@@ -3,7 +3,7 @@
 Captured 2026-11-13 for tag `dotnet-11-release`: .NET SDK `11.0.100`, EF Core `11.0.0-rc.3.26522.148`, Npgsql EF Core provider `11.0.0-rc.3`, Aspire `13.6.5`. Both runs use the AppHost's Postgres: **PostgreSQL 18.3**. The RC1 captures (tag `post-5`) are summarized in [Compared with RC1](#compared-with-rc1-tag-post-5).
 
 - **1,000 games:** the real `efcore` demo, pointed at the AppHost's Postgres (`ConnectionStrings__tilesandtokens`).
-- **20,000 games:** the same Postgres, emptied and reseeded with `GameGenerator.Generate(20_000, seed: 2026)` in batches of 1,000, then `ANALYZE`. The harness lives outside the repo. It uses only repo code (`GameGenerator`, `SavedGameQueries`, `SqlDiagnostics`) plus `Aspire.Hosting.Testing`, the same way `PostgresFixture` does.
+- **20,000 games:** the `bench` command (`src/TilesAndTokens.Demo/Bench/BenchCommand.cs`). Under the AppHost it's the `bench` resource, with its own database (`tilesandtokens_bench`), and it only runs when you start it from the dashboard. It empties `SavedGames`, seeds `GameGenerator.Generate(20_000, seed: 2026)` in batches of 1,000, runs `ANALYZE`, then prints the plans and median timings below. To re-run: `dotnet run --project src/TilesAndTokens.AppHost`, then click **Start** on `bench`.
 
 Plans use `EXPLAIN (ANALYZE, COSTS OFF, TIMING OFF, SUMMARY OFF)` on the exact SQL and parameters EF Core generated (`SqlDiagnostics.ExplainAnalyzeAsync`), after `ANALYZE "SavedGames"`. PostgreSQL 18 includes `Buffers` with `ANALYZE` by default. Timings in the demo sections are a single run, so treat them as rough.
 
@@ -171,7 +171,7 @@ Bitmap Heap Scan on "SavedGames" s (actual rows=5.00 loops=1)
 
 ## 20,000 games: does the GIN index help?
 
-`rows: 20000, LINQ matches: 175, GIN matches: 175`. Both queries return the same 175 ids. Seeding took 28 s.
+`rows: 20000, LINQ matches: 175, GIN matches: 175, same ids: True`. Seeding takes about 30 s. Buffer and heap-block counts move by a few pages between runs, because ids and timestamps differ.
 
 ### LINQ edge query
 
@@ -234,13 +234,17 @@ Planning:
 
 ### Timings (median of 9 runs after 1 warm-up, ids only)
 
-| Query | Plan | Median |
-|---|---|---|
-| LINQ over JSON | Seq Scan + `jsonb_to_recordset` | 52.2 ms |
-| Containment, planner's choice | Seq Scan | 71.1 ms |
-| Containment, GIN used (`enable_seqscan = off`) | BitmapOr of GIN scans | 6.6 ms |
+Three `bench` runs under the AppHost, each on freshly seeded data:
 
-**Takeaway:** when it's used, the GIN index is about 8× faster than the LINQ query. Postgres won't choose it for `@>` by itself, because it can't estimate how selective the condition is, so without the index the containment query is actually *slower* than the LINQ one. The B-tree indexes EF Core 11 creates on nested complex properties are chosen even at 1,000 rows.
+| Query | Plan | Run 1 | Run 2 | Run 3 |
+|---|---|---|---|---|
+| LINQ over JSON | Seq Scan + `jsonb_to_recordset` | 55.5 ms | 55.9 ms | 54.7 ms |
+| Containment, planner's choice | Seq Scan | 206.2 ms | 82.1 ms | 82.1 ms |
+| Containment, GIN used (`enable_seqscan = off`) | BitmapOr of GIN scans | 9.9 ms | 9.2 ms | 8.2 ms |
+
+Run 1's 206 ms for the planner's choice is an outlier that didn't repeat. Treat it as noise.
+
+**Takeaway:** when it's used, the GIN index is about 6× faster than the LINQ query. Postgres won't choose it for `@>` by itself, because it can't estimate how selective the condition is, so without the index the containment query is actually *slower* than the LINQ one. The B-tree indexes EF Core 11 creates on nested complex properties are chosen even at 1,000 rows.
 
 ## Compared with RC1 (tag `post-5`)
 
@@ -249,10 +253,11 @@ The RC1 captures (2026-10-02) used EF Core `11.0.0-rc.1.26425.128` and Npgsql `1
 | | RC1 | `dotnet-11-release` |
 |---|---|---|
 | Query 1b SQL | Raw SQL via `Database.SqlQuery<Guid>`, composed as `WHERE s."Id" IN (SELECT ...)` | `EF.Functions.JsonContains` → `WHERE s."Board" @> @left OR ...` |
-| 20k, containment, planner's choice | Parallel Seq Scan + PK nested loop, 75.1 ms | Seq Scan, 71.1 ms |
-| 20k, containment, GIN forced | BitmapOr + PK nested loop, 3.5 ms | BitmapOr, 6.6 ms |
-| 20k, LINQ over JSON | 53.4 ms | 52.2 ms |
-| 20k, GIN speed-up when used | ~15× | ~8× |
+| 20k, containment, planner's choice | Parallel Seq Scan + PK nested loop, 75.1 ms | Seq Scan, ~82 ms |
+| 20k, containment, GIN forced | BitmapOr + PK nested loop, 3.5 ms | BitmapOr, 8.2–9.9 ms |
+| 20k, LINQ over JSON | 53.4 ms | 54.7–55.9 ms |
+| 20k, GIN speed-up when used | ~15× | ~6× |
+| 20k harness | Ad hoc, not in the repo | `bench` command |
 | Matches at 20k | 175 / 175 | 175 / 175 (same ids) |
 | Planner picks GIN by itself? | No | No |
 

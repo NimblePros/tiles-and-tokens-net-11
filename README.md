@@ -39,6 +39,8 @@ dotnet run --project src/TilesAndTokens.AppHost                   # Postgres + t
 
 Without the AppHost there's no database, so `all` skips the `efcore` demo with a message.
 
+`bench` is a tool, not part of the series, so `all` doesn't run it. It's the 20,000-game benchmark behind [docs/post-5-sql-and-plans.md](docs/post-5-sql-and-plans.md). In the AppHost dashboard it's the `bench` resource: click **Start**. It uses its own database, because it empties and reseeds `SavedGames`. It takes about a minute.
+
 EF Core migrations use the local `dotnet-ef` tool: run `dotnet tool restore` once.
 
 ## Layout

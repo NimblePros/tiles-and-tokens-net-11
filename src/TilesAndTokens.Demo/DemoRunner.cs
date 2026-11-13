@@ -1,3 +1,4 @@
+using TilesAndTokens.Demo.Bench;
 using TilesAndTokens.Demo.Closed;
 using TilesAndTokens.Demo.EfCore;
 using TilesAndTokens.Demo.Json;
@@ -18,6 +19,12 @@ internal static class DemoRunner
         new EfCoreDemo(),
     ];
 
+    // Commands that aren't part of the series: run only by name, never by `all`.
+    private static readonly IReadOnlyList<IDemo> Tools =
+    [
+        new BenchCommand(),
+    ];
+
     public static int Run(string? command, bool noPause)
     {
         if (command == "all")
@@ -26,7 +33,7 @@ internal static class DemoRunner
             return 0;
         }
 
-        var demo = Demos.FirstOrDefault(d => d.Command == command);
+        var demo = Demos.Concat(Tools).FirstOrDefault(d => d.Command == command);
         if (demo is null)
         {
             PrintUsage();
@@ -63,5 +70,11 @@ internal static class DemoRunner
         }
 
         Console.WriteLine($"  {"all",-8} Run every demo in order, pausing between sections");
+        Console.WriteLine();
+        Console.WriteLine("Tools (not run by `all`):");
+        foreach (var tool in Tools)
+        {
+            Console.WriteLine($"  {tool.Command,-8} {tool.Title}");
+        }
     }
 }

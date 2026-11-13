@@ -55,7 +55,8 @@ internal sealed class EfCoreDemo : IDemo
         Narrator.Step("Query 1b: the same, as jsonb containment (Postgres-native GIN index, not an EF feature)");
         await ShowQueryAsync(queries.WithTileOnEdgeUsingGin(new PlayerId("player-042")), db);
         Narrator.Say($"  At {SeedGames:N0} games the table is small enough that Postgres may still scan it.");
-        Narrator.Say("  At 20,000 games it still scans; forced onto the GIN index it's ~8x faster (see docs/post-5-sql-and-plans.md).");
+        Narrator.Say("  At 20,000 games it still scans. Forced onto the GIN index it's several times faster:");
+        Narrator.Say("  run the `bench` resource from the AppHost dashboard, or see docs/post-5-sql-and-plans.md.");
 
         Narrator.Step("Query 2: firstToEdge games by leader score (index on nested complex properties)");
         await ShowQueryAsync(queries.UsingVictory(VictorySnapshot.FirstToEdge).Take(5), db);
