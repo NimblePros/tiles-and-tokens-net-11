@@ -15,15 +15,16 @@ The app is a small board game, [Tiles & Tokens](docs/game-rules.md). Its turns, 
 
 ## Following along
 
-Each post has a git tag. Check out the tag to see the code as it was at the end of that post.
+Each post has a git tag. Check out the tag to see the code as it was at the end of that post. The post names link to the blog posts.
 
 | Tag | Post | What to look at | Run |
 |---|---|---|---|
-| `post-1` | Intro to .NET 11 and the "before" anti-patterns | `src/TilesAndTokens.Legacy`, `tests/TilesAndTokens.Legacy.Tests` | `dotnet run --project src/TilesAndTokens.Demo -- legacy` |
-| `post-2` | Discriminated unions | `src/TilesAndTokens.Domain` (`Actions`, `Placement`, `Engine`), `tests/TilesAndTokens.Domain.Tests` | `dotnet run --project src/TilesAndTokens.Demo -- unions` |
-| `post-3` | Closed hierarchies | `src/TilesAndTokens.Domain` (`Victory`, `Placement/Rules`), `proofs/TilesAndTokens.Domain.Extensions` | `dotnet run --project src/TilesAndTokens.Demo -- closed` |
-| `post-4` | System.Text.Json and union state | `src/TilesAndTokens.Serialization`, `tests/TilesAndTokens.Serialization.Tests/Expected`, `samples/save-v1.json` | `dotnet run --project src/TilesAndTokens.Demo -- json` |
-| `post-5` | EF Core 11 indexes on nested complex types | `src/TilesAndTokens.Persistence`, `src/TilesAndTokens.AppHost`, `docs/post-5-sql-and-plans.md` | `dotnet run --project src/TilesAndTokens.AppHost` |
+| `post-1` | [Intro to .NET 11 and the "before" anti-patterns](https://blog.nimblepros.com/blogs/rolling-into-dotnet-11-modeling-a-board-game-with-csharp-15/) | `src/TilesAndTokens.Legacy`, `tests/TilesAndTokens.Legacy.Tests` | `dotnet run --project src/TilesAndTokens.Demo -- legacy` |
+| `post-2` | [Discriminated unions](https://blog.nimblepros.com/blogs/discriminated-unions-in-csharp-15-a-turn-is-exactly-one-thing/) | `src/TilesAndTokens.Domain` (`Actions`, `Placement`, `Engine`), `tests/TilesAndTokens.Domain.Tests` | `dotnet run --project src/TilesAndTokens.Demo -- unions` |
+| `post-3` | [Closed hierarchies](https://blog.nimblepros.com/blogs/closed-hierarchies-in-csharp-15-every-victory-condition-accounted-for/) | `src/TilesAndTokens.Domain` (`Victory`, `Placement/Rules`), `proofs/TilesAndTokens.Domain.Extensions` | `dotnet run --project src/TilesAndTokens.Demo -- closed` |
+| `post-4` | [System.Text.Json and union state](https://blog.nimblepros.com/blogs/saving-the-game-system-text-json-and-union-state/) | `src/TilesAndTokens.Serialization`, `tests/TilesAndTokens.Serialization.Tests/Expected`, `samples/save-v1.json` | `dotnet run --project src/TilesAndTokens.Demo -- json` |
+| `post-5` | [EF Core 11 indexes on nested complex types](https://blog.nimblepros.com/blogs/ef-core-11-querying-deeply-nested-game-state/) | `src/TilesAndTokens.Persistence`, `src/TilesAndTokens.AppHost`, `docs/post-5-sql-and-plans.md` | `dotnet run --project src/TilesAndTokens.AppHost` |
+| `native-aot` | [Bonus round: publishing with Native AOT](https://blog.nimblepros.com/blogs/the-bonus-round-publishing-tiles-and-tokens-with-native-aot/) | `docs/feature-status.md` (Post 4, *Source generation, trimming, AOT*) | `dotnet publish src/TilesAndTokens.Demo -c Release -r linux-x64 -p:PublishAot=true -p:TreatWarningsAsErrors=false` (needs the native toolchain, e.g. the `-aot` SDK container) |
 
 ## Running
 
