@@ -368,7 +368,7 @@ The workaround, in `src/TilesAndTokens.Serialization/GameActionKinds/` and marke
 - `TilesAndTokensJsonContext` (`[JsonSerializable(typeof(GameState))]`, metadata mode) works with unions and closed hierarchies. Round-trip tests run through it.
 - `TilesAndTokens.Serialization` builds with `IsAotCompatible=true` and **no warnings**.
 - **Trimmed publish:** `dotnet publish src/TilesAndTokens.Demo -c Release -r win-x64 --self-contained -p:PublishTrimmed=true` gives **0 trim warnings**. The trimmed `json` demo saves, loads, and resumes correctly.
-- **Native AOT:** *not verified end to end* (still true for `dotnet-11-release`; not re-run on GA). `-p:PublishAot=true` stops at linking on the dev machine: *vswhere.exe failed to locate Visual Studio with Microsoft.VisualStudio.Component.VC.Tools.x86.x64* (no C++ build tools). This is a machine prerequisite, not a code problem. TODO: run it on a machine (or a CI job) that has the native toolchain.
+- **Native AOT:** verified end to end on Linux with the RC1 SDK. That write-up lives on the `native-aot` tag (`main`), which isn't in this tag's history. It was **not re-run on GA**. The RC1 note below is from before that verification. `-p:PublishAot=true` stops at linking on the dev machine: *vswhere.exe failed to locate Visual Studio with Microsoft.VisualStudio.Component.VC.Tools.x86.x64* (no C++ build tools). This is a machine prerequisite, not a code problem. TODO: run it on a machine (or a CI job) that has the native toolchain.
 
 ### Output customization
 
