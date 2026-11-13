@@ -6,11 +6,11 @@ Companion demo for the NimblePros blog series and conference talk on domain mode
 
 The app is a small board game, [Tiles & Tokens](docs/game-rules.md). Its turns, tile placement validation, and victory conditions give the type system something real to model.
 
-> **Prerelease:** this repo currently targets the .NET 11 **RC1** SDK. It will be updated when .NET 11 goes GA in November 2026. See [docs/feature-status.md](docs/feature-status.md) for exactly what was verified on which SDK.
+> **Which .NET 11?** `post-1` … `post-5`, `native-aot`, and `main` were built on the .NET 11 **RC1** SDK (`11.0.100-rc.1.26425.128`). The **`dotnet-11-release`** tag has the same series moved to the **.NET 11 GA** SDK (`11.0.100`). See [What changed in `dotnet-11-release`](#what-changed-in-dotnet-11-release), and [docs/feature-status.md](docs/feature-status.md) for exactly what was verified on which SDK.
 
 ## Prerequisites
 
-- .NET SDK `11.0.100-rc.1.26425.128` or a later .NET 11 feature band (pinned in `global.json`)
+- .NET SDK `11.0.100-rc.1.26425.128` or later. `global.json` rolls forward, so the GA SDK (`11.0.100`) builds the RC1 tags too.
 - From Post 5 on: a container runtime (Docker or Podman) for Aspire. `dotnet test` starts Postgres through Aspire for the persistence tests.
 
 ## Following along
@@ -25,6 +25,29 @@ Each post has a git tag. Check out the tag to see the code as it was at the end 
 | `post-4` | [System.Text.Json and union state](https://blog.nimblepros.com/blogs/saving-the-game-system-text-json-and-union-state/) | `src/TilesAndTokens.Serialization`, `tests/TilesAndTokens.Serialization.Tests/Expected`, `samples/save-v1.json` | `dotnet run --project src/TilesAndTokens.Demo -- json` |
 | `post-5` | [EF Core 11 indexes on nested complex types](https://blog.nimblepros.com/blogs/ef-core-11-querying-deeply-nested-game-state/) | `src/TilesAndTokens.Persistence`, `src/TilesAndTokens.AppHost`, `docs/post-5-sql-and-plans.md` | `dotnet run --project src/TilesAndTokens.AppHost` |
 | `native-aot` | [Bonus round: publishing with Native AOT](https://blog.nimblepros.com/blogs/the-bonus-round-publishing-tiles-and-tokens-with-native-aot/) | `docs/feature-status.md` (Post 4, *Source generation, trimming, AOT*) | `dotnet publish src/TilesAndTokens.Demo -c Release -r linux-x64 -p:PublishAot=true -p:TreatWarningsAsErrors=false` (needs the native toolchain, e.g. the `-aot` SDK container) |
+| `dotnet-11-release` | No blog post: the series on the .NET 11 GA SDK | `docs/feature-status.md` (*.NET 11 GA re-verification*), `samples/save-v2.json`, `docs/post-5-sql-and-plans.md` | `dotnet run --project src/TilesAndTokens.AppHost` |
+
+> **Building `post-5`, `native-aot` or `main` today:** restore fails. Aspire 13.6.0 now has published security advisories (GHSA-4g86-54fm-h9h8 critical, GHSA-f7vh-h5g3-7jrh high, and MessagePack GHSA-qhrr-8q5h-9q3h moderate). `TreatWarningsAsErrors` turns NU1902/NU1903/NU1904 into errors. To build those tags as they were, run `dotnet build -p:NuGetAudit=false` (local exploration only). `dotnet-11-release` fixes this by moving to Aspire 13.6.5. `post-1` … `post-4` don't use Aspire and build as is.
+
+### What changed in `dotnet-11-release`
+
+Everything was re-verified on the GA SDK. Details and exact error messages are in the tag's `docs/feature-status.md`.
+
+**Versions**
+
+- .NET SDK `11.0.100` (GA), runtime and `Microsoft.Extensions.Hosting` `11.0.0`.
+- **EF Core stays on `11.0.0-rc.3`** (with `dotnet-ef` and `Npgsql.EntityFrameworkCore.PostgreSQL` `11.0.0-rc.3`). Npgsql 11.0.0 isn't released yet, and rc.3 requires exactly EF Core rc.3.
+- Aspire `13.6.0` → `13.6.5`, for the security advisories above.
+
+**Unchanged:** C# 15 unions and closed hierarchies compile and behave as in the posts, with the same syntax, diagnostics (CS8509, CS9382, CS9384) and lowering. System.Text.Json still has no union discriminator, so the `GameAction` workaround from Post 4 stays.
+
+**Changed:**
+
+- **Post 4:** System.Text.Json GA adds `[JsonPolymorphic(InferClosedTypePolymorphism = true)]`, which discovers a closed type's subtypes. `VictoryCondition` uses it instead of listing `[JsonDerivedType]`s. Discriminators are now type names (`"MostPoints"`, not `"mostPoints"`), so **`samples/save-v1.json` no longer loads** (a test proves it). `samples/save-v2.json` is the GA format.
+- **Post 5:** Npgsql rc.3 generates real JSON path indexes, for example `("Board" #>> '{Tiles,0,OwnerId}')`. It rejects an index over *all* tiles, which is what the edge query would need, so the GIN index stays. `EF.Functions.JsonContains` now translates, so `WithTileOnEdgeUsingGin` is plain LINQ instead of raw SQL.
+- **Post 5:** `docs/post-5-sql-and-plans.md` was re-captured. At 20,000 games the forced GIN index is about 6× faster than LINQ (RC1: about 15×, on a different Postgres version). The planner still doesn't choose it by itself.
+- **New `bench` command** for that 20,000-game benchmark. Start it as the `bench` resource in the AppHost dashboard. `all` doesn't run it.
+- **Native AOT** wasn't re-run on GA, and the `native-aot` write-up isn't part of that tag's history.
 
 ## Running
 
