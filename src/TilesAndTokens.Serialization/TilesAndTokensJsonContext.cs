@@ -8,7 +8,7 @@ namespace TilesAndTokens.Serialization;
 /// <remarks>
 /// GenerationMode = Metadata: in the default mode, the generated fast path for a collection of
 /// GameAction (e.g. serializing an IReadOnlyList&lt;GameAction&gt; directly) skips the "kind"
-/// property added by <see cref="UnionCaseKindModifier"/>. Verified on .NET 11 RC1.
+/// property added by <see cref="UnionCaseKindModifier"/>. Verified on .NET 11 RC1 and GA.
 /// </remarks>
 [JsonSourceGenerationOptions(
     JsonSerializerDefaults.Web,

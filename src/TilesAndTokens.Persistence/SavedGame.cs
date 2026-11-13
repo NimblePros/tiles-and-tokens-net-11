@@ -5,7 +5,7 @@ namespace TilesAndTokens.Persistence;
 
 /// <summary>A saved game: the aggregate root for persistence.</summary>
 /// <remarks>
-/// Snapshot types instead of the domain records: EF Core 11 RC1 can't bind Board's
+/// Snapshot types instead of the domain records: EF Core 11 (RC1 and rc.3) can't bind Board's
 /// IReadOnlyList&lt;Tile&gt; constructor parameter, can't map the closed VictoryCondition
 /// hierarchy as a complex type, and rejects unions ("union types are not supported").
 /// </remarks>
@@ -27,7 +27,7 @@ public sealed class SavedGame
 
     /// <summary>
     /// FALLBACK for unions: the whole GameState (including the GameAction turn log) as written by
-    /// the Post 4 serializer. EF Core 11 RC1 can't map union-typed properties.
+    /// the Post 4 serializer. EF Core 11 (RC1 and rc.3) can't map union-typed properties.
     /// </summary>
     public string StateJson { get; private set; } = null!;
 

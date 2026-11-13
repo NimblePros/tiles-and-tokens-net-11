@@ -1,12 +1,12 @@
 [
   {
-    "kind": "mostPoints",
+    "kind": "MostPoints",
     "rounds": 10
   },
   {
-    "kind": "firstToEdge"
+    "kind": "FirstToEdge"
   },
   {
-    "kind": "lastPlayerStanding"
+    "kind": "LastPlayerStanding"
   }
 ]

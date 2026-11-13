@@ -6,8 +6,9 @@ namespace TilesAndTokens.Persistence.Migrations;
 
 /// <summary>
 /// POSTGRES-NATIVE, hand-written: a GIN index over the Board jsonb column for containment (@>)
-/// queries. Not expressible in the EF Core model: Npgsql 11 RC1 turns an EF index into Board.Tiles
-/// into a B-tree over the whole column. Used by SavedGameQueries.WithTileOnEdgeUsingGin.
+/// queries. Not expressible in the EF Core model: Npgsql 11 RC1 turned an EF index into Board.Tiles
+/// into a B-tree over the whole column, and Npgsql 11 rc.3 rejects an index over all elements of a
+/// JSON collection. Used by SavedGameQueries.WithTileOnEdgeUsingGin.
 /// </summary>
 public partial class _20261002161723_AddBoardGinIndex : Migration
 {

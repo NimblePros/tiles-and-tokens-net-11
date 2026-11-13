@@ -8,12 +8,11 @@ namespace TilesAndTokens.Domain;
 /// </summary>
 /// <remarks>
 /// Not marked abstract: a closed type is always implicitly abstract (CS9384).
-/// System.Text.Json doesn't discover closed subtypes on its own, so each one is listed.
+/// System.Text.Json 11 finds the subtypes of a closed type itself (InferClosedTypePolymorphism),
+/// so they aren't listed. Each discriminator is the bare type name ("MostPoints"): the JSON
+/// naming policy doesn't apply to it.
 /// </remarks>
-[JsonPolymorphic(TypeDiscriminatorPropertyName = "kind")]
-[JsonDerivedType(typeof(MostPoints), "mostPoints")]
-[JsonDerivedType(typeof(FirstToEdge), "firstToEdge")]
-[JsonDerivedType(typeof(LastPlayerStanding), "lastPlayerStanding")]
+[JsonPolymorphic(TypeDiscriminatorPropertyName = "kind", InferClosedTypePolymorphism = true)]
 public closed record VictoryCondition
 {
     public abstract string Name { get; }

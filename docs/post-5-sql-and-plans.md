@@ -2,6 +2,8 @@
 
 Captured 2026-10-02. EF Core `11.0.0-rc.1.26425.128`, Npgsql EF Core provider `11.0.0-rc.1.1`.
 
+> **Not re-captured on .NET 11 GA.** On `dotnet-11-release` (EF Core / Npgsql rc.3), Query 1b is plain LINQ with `EF.Functions.JsonContains` and generates `WHERE s."Board" @> @left OR ...` directly, instead of `WHERE s."Id" IN (raw SQL)`. The plans below are from RC1.
+
 - **1,000 games:** from `dotnet run --project src/TilesAndTokens.AppHost` (the `efcore` demo). The AppHost's Postgres is **PostgreSQL 18.3**, the image Aspire 13.6 uses.
 - **20,000 games:** a separate run of the same queries against a scratch **PostgreSQL 17** container. That run isn't part of the repo, and it uses a newer Postgres version than the 1,000-game run.
 

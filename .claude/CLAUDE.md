@@ -14,7 +14,7 @@ Companion demo for a 5-part NimblePros blog series and a conference talk on C# 1
 
 ## Working in this repo
 
-- SDK is pinned in `global.json` (currently .NET 11 RC1). When .NET 11 goes GA (Nov 2026), bump it and re-verify everything in `feature-status.md`.
+- SDK is pinned in `global.json` (.NET 11 GA, `11.0.100`; the `post-*` tags pin RC1). EF Core and `dotnet-ef` are held at rc.3 because Npgsql 11.0.0 isn't out yet: when it ships, bump all three to GA and re-verify the Post 5 entries in `feature-status.md`.
 - `dotnet test` runs on Microsoft.Testing.Platform (opted in via `global.json`).
 - `TreatWarningsAsErrors` is on everywhere, on purpose: missing switch cases should fail the build during the talk.
 - Code is teaching material: favor clarity over cleverness, keep files small, make each feature easy to find.

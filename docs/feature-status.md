@@ -2,16 +2,57 @@
 
 The source of truth for the blog posts. Each entry records what was **verified** against the installed SDK, not what the docs or previews promised.
 
-> **Prerelease notice:** everything here was verified on a .NET 11 release candidate. It will be re-verified when .NET 11 goes GA (November 2026).
+> **Status:** the posts were written on .NET 11 RC1 (tags `post-1` … `post-5`). Everything was re-verified on the **.NET 11 GA** SDK on 2026-11-13 (tag `dotnet-11-release`). See [.NET 11 GA re-verification](#net-11-ga-re-verification) for what changed. Sections below keep their RC1 findings, with GA changes marked **GA:**.
 
 ## Toolchain
 
 | Item | Value | Verified |
 |---|---|---|
-| .NET SDK | `11.0.100-rc.1.26425.128` (RC1, 2026-09-08) | 2026-10-02 |
-| Roslyn | `5.11.0-1.26425.128` | 2026-10-02 |
-| Default `LangVersion` for `net11.0` | `15.0` (no `preview` needed to *select* C# 15) | 2026-10-02 |
-| `LangVersion=14` | Accepted. Used by `TilesAndTokens.Legacy` to keep the "before" code honest. | 2026-10-02 |
+| .NET SDK | `11.0.100` (GA). Was `11.0.100-rc.1.26425.128` (RC1). | 2026-11-13 |
+| Roslyn | `5.12.0-1.26529.118`. Was `5.11.0-1.26425.128` (RC1). | 2026-11-13 |
+| Default `LangVersion` for `net11.0` | `15.0` (no `preview` needed to *select* C# 15) | 2026-11-13 |
+| `LangVersion=14` | Accepted. Used by `TilesAndTokens.Legacy` to keep the "before" code honest. | 2026-11-13 |
+
+## .NET 11 GA re-verification
+
+Done 2026-11-13 on SDK `11.0.100` / runtime `11.0.0`. All 105 tests pass (Domain 52, Legacy 22, Serialization 17, Persistence 14), and the `all` demo runs.
+
+### Packages
+
+| Package | RC1 (`post-5`) | `dotnet-11-release` | Why |
+|---|---|---|---|
+| .NET SDK (`global.json`) | `11.0.100-rc.1.26425.128` | `11.0.100`, `allowPrerelease: false` | GA |
+| Microsoft.Extensions.Hosting | `11.0.0-rc.1.26425.128` | `11.0.0` | GA |
+| Npgsql.EntityFrameworkCore.PostgreSQL | `11.0.0-rc.1.1` | **`11.0.0-rc.3`** | **No Npgsql 11.0.0 GA on nuget.org yet.** rc.3 (2026-10-28) is the latest. |
+| Microsoft.EntityFrameworkCore.Design, `dotnet-ef` | `11.0.0-rc.1.26425.128` | **`11.0.0-rc.3.26522.148`** | Held back to match Npgsql (see below). |
+| Aspire (SDK + 3 packages) | `13.6.0` | `13.6.5` | **Security:** 13.6.0 now fails restore under `TreatWarningsAsErrors` with NU1904/NU1903/NU1902 (GHSA-4g86-54fm-h9h8 critical, GHSA-f7vh-h5g3-7jrh high, MessagePack GHSA-qhrr-8q5h-9q3h moderate). This affects `post-5` as tagged, independent of .NET 11 GA. |
+
+**EF Core 11.0.0 GA can't be used yet.** Npgsql `11.0.0-rc.3` depends on *exactly* `[11.0.0-rc.3.26522.148]` of EF Core / EF Core Relational. Referencing EF Core Design `11.0.0` fails restore:
+
+```
+error NU1107: Version conflict detected for Microsoft.EntityFrameworkCore.Relational.
+  TilesAndTokens.Persistence -> Microsoft.EntityFrameworkCore.Design 11.0.0 -> Microsoft.EntityFrameworkCore.Relational (>= 11.0.0 && < 12.0.0-a)
+  TilesAndTokens.Persistence -> Npgsql.EntityFrameworkCore.PostgreSQL 11.0.0-rc.3 -> Microsoft.EntityFrameworkCore.Relational (= 11.0.0-rc.3.26522.148)
+```
+
+Decision (with the author): keep the whole EF stack on rc.3, a consistent supported set, instead of forcing GA Relational under an RC provider. **TODO: when Npgsql 11.0.0 ships, bump EF Core Design, `dotnet-ef` and Npgsql to GA and re-run the Post 5 checks.**
+
+### Unchanged on GA (re-run, same result)
+
+- C# 15 unions and closed types: syntax, CS8509, CS9384 (`closed abstract`), CS0106 (`closed interface`), CS9382 (proofs project), union lowering (struct, `[Union]`, `IUnion`, one `object Value`), `default` is an empty union, 24 bytes per boxed `int` case, generic unions, closed types emitted as abstract with protected constructors and `[IsClosedType]`.
+- Both `PROVE_*` builds fail with the same diagnostics at the same lines.
+- STJ default behavior: unions write the bare case value and fail to read (*ambiguous for union type*); closed types write only base properties and fail to read (*Deserialization of interface or abstract types is not supported*). The structural classifier works for `Card`.
+- **No union discriminator in STJ GA.** `JsonUnionAttribute` still has only `TypeClassifier`. The `GameAction` workaround stays.
+- EF Core (rc.3): `FromSql` on `SavedGame` still throws `NullReferenceException`. The domain `Board`, `VictoryCondition` and `GameAction` still can't be mapped (same messages). No pending model changes against the RC1 migrations.
+
+### Changed on GA / rc.3
+
+1. **STJ: `[JsonPolymorphic(InferClosedTypePolymorphism = true)]`** (new in GA). STJ discovers a closed type's subtypes, so the `[JsonDerivedType]` list is no longer needed. **Adopted for `VictoryCondition`** (author's decision). See Post 4 below.
+2. **STJ API additions** since RC1: `JsonTypeClassifierFactory<T>`, `JsonTypeClassifierKind`, `JsonTypeClassifierContext.DeclaringType`, `JsonUnionCaseInfo` (`CaseType`, `IsNullable`), `JsonUnionInfoValues<T>`, and on `[JsonPolymorphic]`: `InferClosedTypePolymorphism`. Not used beyond item 1.
+3. **Npgsql rc.3 generates JSON path indexes.** On RC1 every index into JSON became a B-tree over the whole column. See Post 5 below.
+4. **`EF.Functions.JsonContains` translates for a complex JSON property** (Npgsql rc.3). `WithTileOnEdgeUsingGin` is now plain LINQ.
+5. **`IMutableEntityType.AddIndex(properties, collectionIndices)` changed shape:** `collectionIndices` is now `IReadOnlyList<IReadOnlyList<int?>>` (one list per property, one entry per complex collection on its path).
+6. Test-run noise: at AppHost shutdown, an `ObjectDisposedException` from the EventLog logger is printed (*An error occurred while writing to logger(s)*). Tests still pass.
 
 How the language version was checked: put `#error version` in a source file and build. CS8304 reports the compiler version and the effective language version.
 
@@ -262,7 +303,9 @@ public union Card(TileCard, BonusPointsCard) { ... }
 [ { "id": { "value": "water-2" }, "terrain": "Water" }, { "id": { "value": "bonus-1" }, "points": 3 } ]
 ```
 
-**`VictoryCondition`: the same attributes as before C# 15.** `[JsonPolymorphic]` on its own fails with *InvalidOperationException: Polymorphic configuration for type 'VictoryA' should specify at least one derived type.* (`VictoryA` was the scratch-project type.) STJ doesn't discover a closed type's subtypes, so each one is listed:
+> **GA:** this changed. See [VictoryCondition on GA](#victorycondition-on-ga-inferclosedtypepolymorphism) below. The RC1 finding follows.
+
+**`VictoryCondition`: the same attributes as before C# 15 (RC1).** `[JsonPolymorphic]` on its own fails with *InvalidOperationException: Polymorphic configuration for type 'VictoryA' should specify at least one derived type.* (`VictoryA` was the scratch-project type.) STJ doesn't discover a closed type's subtypes, so each one is listed:
 
 ```csharp
 [JsonPolymorphic(TypeDiscriminatorPropertyName = "kind")]
@@ -273,6 +316,27 @@ public closed record VictoryCondition { ... }
 ```
 
 An unknown discriminator fails with *JsonException: Read unrecognized type discriminator id 'mostTerritory'. Path: $.victory*.
+
+#### VictoryCondition on GA: `InferClosedTypePolymorphism`
+
+Verified 2026-11-13 on SDK `11.0.100`. One attribute, no subtype list:
+
+```csharp
+[JsonPolymorphic(TypeDiscriminatorPropertyName = "kind", InferClosedTypePolymorphism = true)]
+public closed record VictoryCondition { ... }
+```
+
+- Works with reflection **and** the source generator (`TilesAndTokensJsonContext`, metadata mode), for writing and reading.
+- **The discriminator is the bare type name**, `"kind": "MostPoints"`. The naming policy is **not** applied: with `JsonSerializerOptions.Web` the properties are camelCase, but the discriminator is still `"MostPoints"`, and `"mostPoints"` fails to read.
+- An explicit `[JsonDerivedType(typeof(X), "x")]` next to it overrides the inferred name for that subtype.
+- On a type that isn't closed (`abstract record`), it fails: *InvalidOperationException: The type 'OpenBase' enables JsonPolymorphicAttribute.InferClosedTypePolymorphism but is not a closed type, so no derived types can be inferred. Declare the type 'closed' or register its derived types using JsonDerivedTypeAttribute.*
+- Unknown discriminators fail as before: *Read unrecognized type discriminator id 'MostTerritory'.*
+
+**Cost: a breaking format change.** `samples/save-v1.json` (RC1, `"kind": "mostPoints"`) no longer loads: *Read unrecognized type discriminator id 'mostPoints'.* It stays frozen and unmodified, and `VersioningTests.SaveV1_NoLongerLoads_BecauseInferredVictoryKindsAreTypeNames` proves the break. `samples/save-v2.json` is the GA format and is the file that must keep loading. Only the victory discriminator differs between the two (`SaveV1_TurnLog_IsUnchangedInV2`). The union `"kind"` values come from our own `UnionCaseKinds` and didn't change.
+
+**This updates the post's comparison:** on GA, closed hierarchies *do* gain something in serialization. The compiler-known subtype list replaces the hand-maintained `[JsonDerivedType]` list, so a new subtype can't be forgotten. The price is type-name discriminators, unless you list names explicitly again.
+
+The Persistence `VictorySnapshot.Kind` column values (`"mostPoints"`, …) are separate constants and didn't change. `SavedGame.StateJson` now holds `"MostPoints"`.
 
 **`GameAction`: not possible natively. A labeled workaround was added with the author's agreement.**
 
@@ -304,7 +368,7 @@ The workaround, in `src/TilesAndTokens.Serialization/GameActionKinds/` and marke
 - `TilesAndTokensJsonContext` (`[JsonSerializable(typeof(GameState))]`, metadata mode) works with unions and closed hierarchies. Round-trip tests run through it.
 - `TilesAndTokens.Serialization` builds with `IsAotCompatible=true` and **no warnings**.
 - **Trimmed publish:** `dotnet publish src/TilesAndTokens.Demo -c Release -r win-x64 --self-contained -p:PublishTrimmed=true` gives **0 trim warnings**. The trimmed `json` demo saves, loads, and resumes correctly.
-- **Native AOT:** *not verified end to end.* `-p:PublishAot=true` stops at linking on the dev machine: *vswhere.exe failed to locate Visual Studio with Microsoft.VisualStudio.Component.VC.Tools.x86.x64* (no C++ build tools). This is a machine prerequisite, not a code problem. TODO: run it on a machine (or a CI job) that has the native toolchain.
+- **Native AOT:** *not verified end to end* (still true for `dotnet-11-release`; not re-run on GA). `-p:PublishAot=true` stops at linking on the dev machine: *vswhere.exe failed to locate Visual Studio with Microsoft.VisualStudio.Component.VC.Tools.x86.x64* (no C++ build tools). This is a machine prerequisite, not a code problem. TODO: run it on a machine (or a CI job) that has the native toolchain.
 
 ### Output customization
 
@@ -314,7 +378,7 @@ Set on `TilesAndTokensJsonContext`: `JsonSerializerDefaults.Web` (camelCase), `W
 
 ### Versioning
 
-- `samples/save-v1.json` is frozen and must keep loading (`VersioningTests.SaveV1_StillLoads`).
+- `samples/save-v1.json` is frozen and must keep loading (`VersioningTests.SaveV1_StillLoads`). **GA:** after adopting `InferClosedTypePolymorphism`, it intentionally no longer loads. `samples/save-v2.json` took over this role (`SaveV2_StillLoads`).
 - **Adding a union case is backward compatible.** A test-only `union GameActionV2(RollDice, PlayCard, Pass, TradeResources)` loads the v1 turn log unchanged and round-trips its new case. A test-only union is used so the real game rules don't change.
 - **v1 code reading a v2 file:** *JsonException: Unknown GameAction kind 'tradeResources'. Known kinds: rollDice, playCard, pass.* That message is ours, from the classifier. A missing `"kind"` gives *GameAction JSON has no "kind" property.*
 
@@ -327,7 +391,7 @@ The JSON shape is checked against committed files in `tests/TilesAndTokens.Seria
 - `Legacy/Json/TurnActionJsonConverter.cs`: a hand-written converter for the null-heavy `TurnAction`, 63 non-blank lines. Tests show that it silently drops the second action of an invalid turn, and that a typo in `"kind"` loads as an empty action.
 - `[JsonPolymorphic]` / `[JsonDerivedType]` on the open `LegacyAction`. `TradeAction` isn't listed, so serializing it compiles and then throws `NotSupportedException` at runtime.
 
-The comparison for the post: closed hierarchies need **the same attributes** as before (no gain), but the compiler now guarantees the subtype list is complete within the assembly. Unions get real built-in support when their cases have different shapes. When they don't, the extension-point workaround is **not shorter** than a converter (79 vs. 63 non-blank lines). Its advantages are elsewhere: it's written once for any union (each new case is one line in `UnionCaseKinds`), STJ still reads and writes every property, and an unknown kind fails loudly instead of loading as an empty action.
+The comparison for the post (RC1; **GA:** closed hierarchies now need only `InferClosedTypePolymorphism`, see above): closed hierarchies need **the same attributes** as before (no gain), but the compiler now guarantees the subtype list is complete within the assembly. Unions get real built-in support when their cases have different shapes. When they don't, the extension-point workaround is **not shorter** than a converter (79 vs. 63 non-blank lines). Its advantages are elsewhere: it's written once for any union (each new case is one line in `UnionCaseKinds`), STJ still reads and writes every property, and an unknown kind fails loudly instead of loading as an empty action.
 
 ## Post 5: EF Core 11 nested complex type indexes
 
@@ -357,7 +421,17 @@ The plan wanted indexes on `Board.Tiles[].Position.X` and `Board.Tiles[].OwnerId
    CREATE INDEX "IX_Games_Board_Tiles_OwnerId" ON "Games" ("Board");
    ```
 
-   The same happens for a nested property inside a JSON-mapped (non-collection) complex type. The edge query can't use these indexes, so none is configured. (Core messages that exist in RC1: *Indexes cannot reference properties whose path goes through a complex collection* is `CoreStrings.IndexOnComplexCollection`. `UniqueIndexOnComplexProperty` says unique indexes aren't supported on complex properties. Neither fired for the configurations above.)
+   The same happens for a nested property inside a JSON-mapped (non-collection) complex type. The edge query can't use these indexes, so none is configured.
+
+   **GA (Npgsql `11.0.0-rc.3`, EF Core `11.0.0-rc.3.26522.148`, verified 2026-11-13 from `GenerateCreateScript`):** this changed.
+
+   | Index | Npgsql rc.3 DDL |
+   |---|---|
+   | `HasIndex(g => g.Board.Tiles[0].OwnerId)` (fixed position) | `CREATE INDEX ... ON "SavedGames" (("Board" #>> '{Tiles,0,OwnerId}'));` |
+   | Nested property in a JSON (non-collection) complex type, `Summary.Leader.PlayerId` with `Summary.ToJson()` | `CREATE INDEX ... ON "SavedGames" (("Summary" #>> '{Leader,PlayerId}'));` |
+   | All elements: `AddIndex([ownerId], [[null]])` | Rejected at model validation: *InvalidOperationException: PostgreSQL expression indexes cannot traverse all elements of a JSON collection. Index the collection itself or select a fixed collection position instead.* |
+
+   Real path expression indexes now exist. The edge query, though, needs "*any* tile on an edge", which is the all-elements case Postgres can't express as an expression index. So option A still stands: column-mapped `Summary` indexes, plus the GIN index for containment. (Core messages that exist in RC1: *Indexes cannot reference properties whose path goes through a complex collection* is `CoreStrings.IndexOnComplexCollection`. `UniqueIndexOnComplexProperty` says unique indexes aren't supported on complex properties. Neither fired for the configurations above.)
 
 **Decision (option A, agreed with the author):** split the post along what works.
 
@@ -387,10 +461,11 @@ CREATE INDEX "IX_SavedGames_Summary_Victory_Kind_Summary_Leader_Score" ON "Saved
 
 - `CREATE INDEX "IX_SavedGames_Board_Gin" ON "SavedGames" USING GIN ("Board" jsonb_path_ops);`
 - It's used only by `@>` containment, so the query is raw SQL (`WithTileOnEdgeUsingGin`) that selects ids and is composed into LINQ (`WHERE "Id" IN (...)`). It returns the same rows as the LINQ query (tested).
+- **GA (Npgsql rc.3):** `WithTileOnEdgeUsingGin` is plain LINQ with `EF.Functions.JsonContains(g.Board, json)`, which generates `WHERE s."Board" @> @left OR s."Board" @> @right OR ...`. Still the same rows (tested). The plans in `post-5-sql-and-plans.md` were captured on RC1 with the raw-SQL form and **haven't been re-captured**.
 - **Result at 20,000 games:** when the index is used it's about 15× faster (3.5 ms vs. 53.4 ms for LINQ). **But Postgres's planner doesn't choose it.** It picks a parallel seq scan (75.1 ms), because Postgres keeps no statistics for `jsonb @>` selectivity. At 1,000 games it scans the table too. Shown honestly in the demo and in the plans doc.
 - Getting there hit two more RC1 limits:
   - **`FromSql` on `SavedGame` throws `NullReferenceException`** (`RelationalQueryableMethodTranslatingExpressionVisitor.GenerateComplexJsonShaper`). The workaround is to select ids with `Database.SqlQuery<Guid>` and compose.
-  - **`EF.Functions.JsonContains(g.Board, ...)` doesn't translate** for a complex JSON property (*The LINQ expression ... could not be translated*).
+  - **`EF.Functions.JsonContains(g.Board, ...)` doesn't translate** for a complex JSON property (*The LINQ expression ... could not be translated*). **GA (Npgsql rc.3): fixed, it translates to `@>`.** The `FromSql` NRE is still there.
 
 ### Domain types vs. snapshot types: snapshots
 

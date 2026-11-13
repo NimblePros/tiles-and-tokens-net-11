@@ -3,7 +3,7 @@ using TilesAndTokens.Domain;
 namespace TilesAndTokens.Serialization;
 
 /// <summary>
-/// WORKAROUND until System.Text.Json has a union discriminator (verified missing in .NET 11 RC1).
+/// WORKAROUND until System.Text.Json has a union discriminator (verified missing in .NET 11 RC1 and GA).
 /// </summary>
 /// <remarks>
 /// STJ writes a union as its bare case value. RollDice and Pass both serialize to

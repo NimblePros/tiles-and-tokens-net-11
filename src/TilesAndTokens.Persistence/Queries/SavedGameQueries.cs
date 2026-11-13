@@ -24,9 +24,8 @@ public sealed class SavedGameQueries(TilesAndTokensDbContext db)
     /// (<c>@&gt;</c>), so it can use the GIN index added by the AddBoardGinIndex migration.
     /// </summary>
     /// <remarks>
-    /// Raw SQL selects only ids (FromSql on SavedGame throws NullReferenceException in EF Core 11 RC1,
-    /// and EF.Functions.JsonContains doesn't translate for a complex JSON property). The ids are
-    /// composed into an ordinary LINQ query, which EF wraps in WHERE "Id" IN (...).
+    /// EF.Functions.JsonContains on the complex JSON property translates to "Board" @> ... (verified on
+    /// Npgsql 11 rc.3; on RC1 it didn't translate and this query was raw SQL).
     /// </remarks>
     public IQueryable<SavedGame> WithTileOnEdgeUsingGin(PlayerId player)
     {
@@ -35,12 +34,11 @@ public sealed class SavedGameQueries(TilesAndTokensDbContext db)
         var top = EdgeTile(player, "Y", 0);
         var bottom = EdgeTile(player, "Y", LastIndex);
 
-        var ids = db.Database.SqlQuery<Guid>($"""
-            SELECT "Id" AS "Value" FROM "SavedGames"
-            WHERE "Board" @> {left}::jsonb OR "Board" @> {right}::jsonb OR "Board" @> {top}::jsonb OR "Board" @> {bottom}::jsonb
-            """);
-
-        return db.SavedGames.AsNoTracking().Where(g => ids.Contains(g.Id));
+        return db.SavedGames.AsNoTracking().Where(g =>
+            EF.Functions.JsonContains(g.Board, left)
+            || EF.Functions.JsonContains(g.Board, right)
+            || EF.Functions.JsonContains(g.Board, top)
+            || EF.Functions.JsonContains(g.Board, bottom));
     }
 
     /// <summary>Games using a victory condition kind, highest leader score first. Uses the nested-property index.</summary>

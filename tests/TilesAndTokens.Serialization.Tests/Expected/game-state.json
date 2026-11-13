@@ -200,7 +200,7 @@
     }
   ],
   "victory": {
-    "kind": "mostPoints",
+    "kind": "MostPoints",
     "rounds": 20
   },
   "turnLog": [

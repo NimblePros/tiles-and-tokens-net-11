@@ -58,7 +58,7 @@ internal sealed class JsonDemo : IDemo
         var json = JsonNode.Parse(File.ReadAllText(SavePath))!;
         Narrator.Say($"{new FileInfo(SavePath).Length:N0} bytes. Two excerpts:");
 
-        Narrator.Say("\n\"victory\" (closed hierarchy: [JsonPolymorphic] + [JsonDerivedType]):");
+        Narrator.Say("\n\"victory\" (closed hierarchy: [JsonPolymorphic(InferClosedTypePolymorphism = true)]):");
         Narrator.Code(Indent(json["victory"]!));
 
         Narrator.Say("\n\"turnLog\" (union: \"kind\" added by our modifier, read back by our classifier):");

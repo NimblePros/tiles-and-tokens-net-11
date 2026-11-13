@@ -34,8 +34,8 @@ public sealed class TilesAndTokensDbContext(DbContextOptions<TilesAndTokensDbCon
         game.HasIndex(g => g.Summary.Leader.PlayerId);
         game.HasIndex(g => new { g.Summary.Victory.Kind, g.Summary.Leader.Score });
 
-        // Not configured: an index into Board.Tiles. EF Core 11 accepts one
-        // (e.g. HasIndex(g => g.Board.Tiles[0].OwnerId)), but Npgsql 11 RC1 generates a B-tree
-        // over the whole "Board" column, which the edge query can't use. See docs/feature-status.md.
+        // Not configured: an index into Board.Tiles. Npgsql 11 rc.3 turns HasIndex(g => g.Board.Tiles[0].OwnerId)
+        // into a path index on one fixed tile, and rejects an index over all tiles. The edge query
+        // needs "any tile", so neither helps. See docs/feature-status.md.
     });
 }
